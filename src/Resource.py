@@ -21,7 +21,7 @@
 #####################################################################
 
 import os
-from Queue import Queue, Empty
+from queue import Queue, Empty
 from threading import Thread, BoundedSemaphore
 import time
 import shutil
@@ -30,6 +30,8 @@ import stat
 from Task import Task
 import Log
 import Version
+
+from future.utils import raise_
 
 class Loader(Thread):
   def __init__(self, target, name, function, resultQueue, loaderSemaphore, onLoad = None):
@@ -78,7 +80,7 @@ class Loader(Thread):
     Log.notice("Loaded %s.%s in %.3f seconds" % (self.target.__class__.__name__, self.name, self.time))
     
     if self.exception:
-      raise self.exception[0], self.exception[1], self.exception[2]
+      raise_(self.exception[0], self.exception[1], self.exception[2])
     if self.target and self.name:
       setattr(self.target, self.name, self.result)
     if self.onLoad:

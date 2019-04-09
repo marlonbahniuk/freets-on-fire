@@ -28,8 +28,6 @@ import os
 
 # This trickery is needed to get OpenGL 3.x working with py2exe
 if hasattr(sys, "frozen") and os.name == "nt":
-  import ctypes
-  from ctypes import util
   sys.path.insert(0, "data/PyOpenGL-3.0.0a5-py2.5.egg")
   sys.path.insert(0, "data/setuptools-0.6c8-py2.5.egg")
 
@@ -59,7 +57,7 @@ if __name__ == "__main__":
   try:
     opts, args = getopt.getopt(sys.argv[1:], "vp:", ["verbose", "play="])
   except getopt.GetoptError:
-    print usage
+    print(usage)
     sys.exit(1)
 
   songName = None
