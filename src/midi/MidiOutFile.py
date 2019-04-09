@@ -1,10 +1,10 @@
 # -*- coding: ISO-8859-1 -*-
 
-from MidiOutStream import MidiOutStream
-from RawOutstreamFile import RawOutstreamFile
+from src.midi.MidiOutStream import MidiOutStream
+from src.midi.RawOutstreamFile import RawOutstreamFile
 
-from constants import *
-from DataTypeConverters import fromBytes, writeVar
+from src.midi.constants import *
+from src.midi.DataTypeConverters import fromBytes, writeVar
 
 class MidiOutFile(MidiOutStream):
 

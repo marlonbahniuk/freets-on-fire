@@ -5,9 +5,11 @@ from struct import unpack
 
 # uhh I don't really like this, but there are so many constants to 
 # import otherwise
-from constants import *
+from src.midi.constants import *
 
-from EventDispatcher import EventDispatcher
+from src.midi.EventDispatcher import EventDispatcher
+
+from future.utils import raise_
 
 class MidiFileParser:
 
@@ -44,8 +46,8 @@ class MidiFileParser:
         header_chunk_zise = raw_in.readBew(4)
 
         # check if it is a proper midi file
-        if header_chunk_type != 'MThd':
-            raise TypeError, "It is not a valid midi file!"
+        if header_chunk_type != b'MThd':
+            raise_(TypeError, "It is not a valid midi file!")
 
         # Header values are at fixed locations, so no reason to be clever
         self.format = raw_in.readBew(2)

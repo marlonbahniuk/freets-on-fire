@@ -24,7 +24,7 @@ import asyncore
 import socket
 import struct
 import time
-from io import StringIO
+from io import BytesIO
 
 import Log
 
@@ -70,7 +70,7 @@ class Connection(asyncore.dispatcher):
     self._buffer = []
     self._sentSizeField = False
     self._receivedSizeField = 0
-    self._packet = StringIO.StringIO()
+    self._packet = BytesIO()
 
     if not sock:
       self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -128,7 +128,7 @@ class Connection(asyncore.dispatcher):
             self.handlePacket(self._packet.getvalue())
           self._packet.truncate()
           self._packet.seek(0)
-    except socket.error as e:
+    except Exception as e:
       Log.error("Socket error while receiving: %s" % str(e))
 
   def writable(self):
@@ -201,7 +201,7 @@ class Server(asyncore.dispatcher):
     self.handle_close()
 
   def handleClose(self):
-    for c in self.clients.values():
+    for c in list(self.clients.values()):
       c.close()
 
   def handle_close(self):

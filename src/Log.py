@@ -47,7 +47,7 @@ else:
   }
 
 def log(cls, msg):
-  msg = unicode(msg).encode(encoding, "ignore")
+  msg = str(msg.encode(encoding, "ignore"))
   if not quiet:
     print(labels[cls] + " " + msg)
   logFile.write(labels[cls] + " " + msg)

@@ -138,9 +138,6 @@ class Config:
     if not self.config.has_section(section):
       self.config.add_section(section)
 
-    if type(value) == unicode:
-      value = value.encode(encoding)
-    else:
       value = str(value)
 
     self.config.set(section, option, value)

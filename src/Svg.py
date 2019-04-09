@@ -22,6 +22,7 @@
 
 import re
 import os
+import io
 from xml import sax
 from OpenGL.GL import *
 from numpy import reshape, dot, transpose, identity, zeros, float32
@@ -539,7 +540,7 @@ class SvgDrawing:
     self.transform = SvgTransform()
 
     # Detect the type of data passed in
-    if type(svgData) == file:
+    if type(svgData) in [io.TextIOBase, io.BufferedIOBase, io.RawIOBase, io.IOBase]:
       self.svgData = svgData.read()
     elif type(svgData) == str:
       bitmapFile = svgData.replace(".svg", ".png")

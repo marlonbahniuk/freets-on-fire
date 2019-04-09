@@ -20,7 +20,10 @@
 # MA  02110-1301, USA.                                              #
 #####################################################################
 
-import midi
+from src.midi.MidiOutStream import MidiOutStream
+from src.midi.MidiOutFile import MidiOutFile
+from src.midi.MidiInFile import MidiInFile
+
 import Log
 import Audio
 from configparser import ConfigParser
@@ -94,9 +97,6 @@ class SongInfo(object):
   def _set(self, attr, value):
     if not self.info.has_section("song"):
       self.info.add_section("song")
-    if type(value) == unicode:
-      value = value.encode(Config.encoding)
-    else:
       value = str(value)
     self.info.set("song", attr, value)
     
@@ -134,7 +134,7 @@ class SongInfo(object):
     try:
       noteFileName = os.path.join(os.path.dirname(self.fileName), "notes.mid")
       info = MidiInfoReader()
-      midiIn = midi.MidiInFile(info, noteFileName)
+      midiIn = MidiInFile(info, noteFileName)
       try:
         midiIn.read()
       except MidiInfoReader.Done:
@@ -142,7 +142,7 @@ class SongInfo(object):
       info.difficulties.sort(lambda a, b: cmp(b.id, a.id))
       self._difficulties = info.difficulties
     except:
-      self._difficulties = difficulties.values()
+      self._difficulties = list(difficulties.values())
     return self._difficulties
 
   def getName(self):
@@ -166,7 +166,7 @@ class SongInfo(object):
     self._set("artist", value)
     
   def getScoreHash(self, difficulty, score, stars, name):
-    return sha.sha("%d%d%d%s" % (difficulty.id, score, stars, name)).hexdigest()
+    return hashlib.sha1("%d%d%d%s" % (difficulty.id, score, stars, name)).hexdigest()
     
   def getDelay(self):
     return self._get("delay", int, 0)
@@ -248,9 +248,6 @@ class LibraryInfo(object):
   def _set(self, attr, value):
     if not self.info.has_section("library"):
       self.info.add_section("library")
-    if type(value) == unicode:
-      value = value.encode(Config.encoding)
-    else:
       value = str(value)
     self.info.set("library", attr, value)
     
@@ -469,7 +466,7 @@ class Song(object):
 	
     # load the notes
     if noteFileName:
-      midiIn = midi.MidiInFile(MidiReader(self), noteFileName)
+      midiIn = MidiInFile(MidiReader(self), noteFileName)
       midiIn.read()
 
     # load the script
@@ -482,7 +479,7 @@ class Song(object):
       track.update()
 
   def getHash(self):
-    h = sha.new()
+    h = hashlib.new()
     f = open(self.noteFileName, "rb")
     bs = 1024
     while True:
@@ -666,7 +663,7 @@ class ScriptReader:
     self.file = scriptFile
 
   def read(self):
-    for line in self.file.xreadlines():
+    for line in self.file.readlines():
       if line.startswith("#"): continue
       time, length, type, data = re.split("[\t ]+", line.strip(), 3)
       time   = float(time)
@@ -682,9 +679,9 @@ class ScriptReader:
       for track in self.song.tracks:
         track.addEvent(time, event)
 
-class MidiReader(midi.MidiOutStream):
+class MidiReader(MidiOutStream):
   def __init__(self, song):
-    midi.MidiOutStream.__init__(self)
+    MidiOutStream.__init__(self)
     self.song = song
     self.heldNotes = {}
     self.velocity  = {}
@@ -706,7 +703,7 @@ class MidiReader(midi.MidiOutStream):
       return (60000.0 * ticks) / (bpm * self.ticksPerBeat)
       
     if self.song.bpm:
-      currentTime = midi.MidiOutStream.abs_time(self)
+      currentTime = MidiOutStream.abs_time(self)
 
       # Find out the current scaled time.
       # Yeah, this is reeally slow, but fast enough :)
@@ -727,7 +724,7 @@ class MidiReader(midi.MidiOutStream):
     
   def tempo(self, value):
     bpm = 60.0 * 10.0**6 / value
-    self.tempoMarkers.append((midi.MidiOutStream.abs_time(self), bpm))
+    self.tempoMarkers.append((MidiOutStream.abs_time(self), bpm))
     if not self.song.bpm:
       self.song.setBpm(bpm)
     self.addEvent(None, Tempo(bpm))
@@ -752,15 +749,16 @@ class MidiReader(midi.MidiOutStream):
     except KeyError:
       Log.warn("MIDI note 0x%x on channel %d ending at %d was never started." % (note, channel, self.abs_time()))
       
-class MidiInfoReader(midi.MidiOutStream):
+class MidiInfoReader(MidiOutStream):
   # We exit via this exception so that we don't need to read the whole file in
   class Done: pass
   
   def __init__(self):
-    midi.MidiOutStream.__init__(self)
+    MidiOutStream.__init__(self)
     self.difficulties = []
 
   def note_on(self, channel, note, velocity):
+
     try:
       track, number = noteMap[note]
       diff = difficulties[track]
@@ -829,7 +827,7 @@ def createSong(engine, name, guitarTrackName, backgroundTrackName, rhythmTrackNa
     rhythmFile = None
     
   f = open(noteFile, "wb")
-  m = midi.MidiOutFile(f)
+  m = MidiOutFile(f)
   m.header()
   m.start_of_track()
   m.update_time(0)
@@ -884,5 +882,6 @@ def getAvailableSongs(engine, library = DEFAULT_LIBRARY, includeTutorials = Fals
   songs = [SongInfo(engine.resource.fileName(library, name, "song.ini", writable = True)) for name in names]
   if not includeTutorials:
     songs = [song for song in songs if not song.tutorial]
-  songs.sort(lambda a, b: cmp(a.name, b.name))
+
+  songs.sort(key=lambda song: song.name)
   return songs

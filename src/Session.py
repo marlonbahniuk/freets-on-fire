@@ -21,7 +21,7 @@
 #####################################################################
 
 import pickle
-from StringIO import StringIO
+from io import BytesIO
 
 import Network
 import Engine
@@ -64,7 +64,7 @@ class MessageBroker:
     for handler in reversed(self.messageHandlers):
       try:
         handler.handleMessage(sender, message)
-      except Exception, e:
+      except Exception as e:
         import traceback
         traceback.print_exc()
 
@@ -80,7 +80,7 @@ class MessageHandler:
   def handleMessage(self, sender, message):
     f = None
     try:
-      n = "handle" + str(message.__class__).split(".")[-1]
+      n = "handle" + type(message).__name__.split(".")[-1]
       f = getattr(self, n)
     except AttributeError:
       return None
@@ -98,8 +98,8 @@ class Phrasebook:
     self.sentClasses = {}
 
   def serialize(data):
-    s = StringIO()
-    pickle.Pickler(s, protocol = 2).dump(data)
+    s = BytesIO()
+    pickle.Pickler(s, protocol=2).dump(data)
     return s.getvalue()
   serialize = staticmethod(serialize)
 
@@ -126,7 +126,7 @@ class Phrasebook:
     
     if not message.__class__ in self.sentClasses:
       id = len(self.sentClasses) + 1
-      definition = [message.__class__, message.__dict__.keys()]
+      definition = [message.__class__, list(message.__dict__.keys())]
       self.sentClasses[message.__class__] = [id] + definition
       packets.append(self.serialize([-id] + definition))
       Log.debug("%d phrases taught." % len(self.sentClasses))
